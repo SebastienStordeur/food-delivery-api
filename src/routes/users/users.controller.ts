@@ -1,60 +1,66 @@
 import { Request, Response } from "express";
-import bcrypt from "bcrypt";
+import argon2 from "argon2";
 
 import Joi from "joi";
-import { db } from "../../config/admin";
-import admin from "firebase-admin";
+import { PrismaClient } from "@prisma/client";
+import { Session } from "express-session";
+
+interface CustomSession extends Session {
+  userId: number;
+}
+
+const prisma = new PrismaClient();
 
 export async function createUser(req: Request, res: Response) {
   try {
+    const passwordRegex: RegExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/;
     const schemaValidation = Joi.object({
       email: Joi.string().email().required().max(200).min(6),
-      password: Joi.string()
-        .required()
-        .min(10)
-        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/),
+      password: Joi.string().required().min(10).regex(passwordRegex),
     });
 
-    const { email, password } = await schemaValidation.validateAsync(req.body);
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const { email, password } = await schemaValidation.validateAsync(req.body, { abortEarly: false });
+    const hashedPassword = await argon2.hash(password);
 
-    const newUser = {
-      email,
-      password: hashedPassword,
-    };
+    const existingUser = await prisma.user.findFirst({ where: { email } });
 
-    await admin.auth().createUser(newUser);
-    const userRef = db.collection("users");
-    const querySnapshot = await userRef.where("email", "==", email).get();
-
-    if (!querySnapshot.empty) {
-      return res.status(400).json({ ok: false, message: "This email is already used" });
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: "This email is already used" });
     }
 
-    await userRef.add(newUser);
+    await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        fullname: "test",
+      },
+    });
+
     return res.status(201).json({ success: true, message: "User successfully created" });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ success: false });
+    return res.status(500).json({ success: false, error });
   }
 }
 
 export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
-    console.log(email);
+    const existingUser = await prisma.user.findFirst({ where: { email } });
+    if (!existingUser) {
+      return res.status(400).json({ success: false, message: "This user does not exist" });
+    }
 
-    const userRef = db.collection("users");
-    const user = await admin
-      .auth()
-      .getUserByEmail(email)
-      .then((res) => {
-        console.log(res);
-      });
+    const matchedPassword = await argon2.verify(existingUser.password, password);
+    if (!matchedPassword) {
+      return res.status(400).json({ success: false, message: "Wrong email/password combination" });
+    }
 
-    console.log(user, email);
+    (req.session as CustomSession).userId = existingUser.id;
+
+    return res.status(200).json({ success: true, existingUser });
   } catch (error) {
     console.log(error);
-    res.status(400).json({ error });
+    res.status(500).json({ success: false, error });
   }
 }
