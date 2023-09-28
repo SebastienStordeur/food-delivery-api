@@ -4,6 +4,7 @@ import helmet from "helmet";
 import session from "express-session";
 
 import usersRouter from "./routes/users/users.router";
+import mealsRouter from "./routes/meals/meals.router";
 
 const app = express();
 
@@ -22,5 +23,6 @@ app.use(
 );
 
 app.use("/user", usersRouter);
+app.use("/meal", mealsRouter);
 
 export default app;

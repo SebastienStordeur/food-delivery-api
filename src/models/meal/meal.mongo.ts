@@ -6,7 +6,12 @@ const mealSchema = new mongoose.Schema({
     required: [true, "Your meal needs a name"],
   },
   ingredients: {
-    type: Array,
+    type: [
+      {
+        name: { type: String },
+        quantity: { quantity: Number, unit: String },
+      },
+    ],
     default: [],
     required: true,
   },
@@ -26,3 +31,5 @@ const mealSchema = new mongoose.Schema({
     required: true,
   },
 });
+
+export const Meal = mongoose.model("Meal", mealSchema);
