@@ -9,7 +9,8 @@ const mealSchema = new mongoose.Schema({
     type: [
       {
         name: { type: String },
-        quantity: { quantity: Number, unit: String },
+        quantity: { type: Number },
+        unit: { type: String },
       },
     ],
     default: [],
@@ -19,6 +20,11 @@ const mealSchema = new mongoose.Schema({
     type: Array,
     default: [],
     required: true,
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: 0,
   },
   created_at: {
     type: Date,

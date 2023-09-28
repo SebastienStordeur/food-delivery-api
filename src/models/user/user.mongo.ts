@@ -13,6 +13,10 @@ const userSchema = new mongoose.Schema({
     required: [true, "A password is required"],
     minLength: 10,
   },
+  cart: {
+    type: [String],
+    default: [],
+  },
   created_at: {
     type: Date,
     default: Date.now,
