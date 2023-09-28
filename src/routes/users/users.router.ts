@@ -5,7 +5,7 @@ import { validateUserRegistration } from "../../middlewares/validation/userRegis
 
 const usersRouter = express.Router();
 
-usersRouter.post("/signup", validateUserRegistration, createUser);
+usersRouter.post("/signup", rateLimiter, validateUserRegistration, createUser);
 usersRouter.post("/login", rateLimiter, login);
 
 export default usersRouter;
