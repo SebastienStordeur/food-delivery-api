@@ -8,6 +8,13 @@ import mealsRouter from "./routes/meals/meals.router";
 
 const app = express();
 
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    xDownloadOptions: false,
+  })
+);
+app.use(cors());
 app.use(express.json());
 app.use(
   session({
