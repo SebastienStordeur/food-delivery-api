@@ -5,6 +5,7 @@ import session from "express-session";
 
 import usersRouter from "./routes/users/users.router";
 import mealsRouter from "./routes/meals/meals.router";
+import ordersRouter from "./routes/orders/orders.router";
 
 const app = express();
 
@@ -31,5 +32,6 @@ app.use(
 
 app.use("/user", usersRouter);
 app.use("/meal", mealsRouter);
+app.use("/order", ordersRouter);
 
 export default app;
