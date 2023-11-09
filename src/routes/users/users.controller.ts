@@ -46,6 +46,6 @@ export async function login(req: Request, res: Response) {
     return res.status(200).json({ success: true, existingUser });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error });
+    return res.status(500).json({ success: false, error });
   }
 }
